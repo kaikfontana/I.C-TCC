@@ -1,0 +1,112 @@
+---
+title: "Projeto WorkFlow"
+author: "Kaik_Fontana"
+date: "25/05/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Sessão 1: Pacotes necessários
+
+```{r}
+# unzip data - descompactação dos dados
+# library(utils)
+# setwd("~/Documents/data/oss-institute")
+# setwd("~/Documents/github/oss-Lessons/spatial-data-gis-law")
+# install.packages("rgdal")
+# install.packages("rgeos")
+# install.packages("mapview")
+
+library(rgdal)
+library(sp)
+library(raster)
+library(ggplot2)
+library(rgeos)
+library(mapview)
+library(leaflet)
+library(broom) #comando utilizado caso precise converter dados sp em dataframes
+options(stringsAsFactors = FALSE)
+```
+
+# Sessão 2: Banco de dados
+
++ Carregando shape de polígonos hexagonais para o cerrado
+
+```{r}
+cerrado_20km <- readOGR("Data/SIRGAS2000/Grid_Cerrado_SIRGAS2000_20km2.shp")
+cerrado_50km <- readOGR("Data/SIRGAS2000/Grid_Cerrado_SIRGAS2000_50km2.shp")
+cerrado_100km <- readOGR("Data/SIRGAS2000/Grid_Cerrado_SIRGAS2000_100km2.shp")
+cerrado_200km <- readOGR("Data/SIRGAS2000/Grid_Cerrado_SIRGAS2000_200km2.shp")
+```
+
++ Carregando shape do recorte do cerrado
+
+```{r}
+cerrado_recorte <- readOGR("Data/Biomas_250mil/cerrado_sirgas2000.shp")
+```
+
+
++ Carregando UF do Brasil
+
+```{r}
+uf <- readOGR("Data/UF-Brasil/BR_UF_2021.shp")
+uf_reprojet <- spTransform(uf, CRSobj = crs(cerrado_recorte))
+```
+
++ Carregando shape com contornos dos biomas do Brasil em 1:250 mil
+
+```{r}
+biomas <- readOGR("Data/Biomas_250mil/lm_bioma_250.shp")
+biomas_reprojet <- spTransform(biomas, CRSobj = crs(cerrado_recorte))
+```
+
++ Plotando mapa do Brasil + Hexágonos
+
+```{r}
+# plot(uf, col = as.numeric(uf@data$CD_UF), main = "Brasil + hexágono cerrado")
+# plot(uf_reprojet, main = "Brasil + Hexágono Cerrado") + 
+# plot(cerrado_50km, add = TRUE, col = "purple")
+mapview(uf_reprojet) +
+mapview(cerrado_50km)
+```
+
++ Como selecionar um polígono em particular
++ Consigo pintar o polígono com alguma cor?
+
+```{r}
+mapview(uf_reprojet, main = "Mapa Brasil com polígono pintado") + 
+mapview(cerrado_recorte) + 
+mapview(cerrado_50km[530,])
+```
+
++ Como fazer um Crop do raster através de um polígo em específico do shapefile
++ Carregando raster
+
+```{r}
+cerrado_raster_1985 <- raster("Data/SIRGAS2000/Cerrado_1985_SIRGAS2000.tif")
+```
+
+```{r}
+nraster <- crop(cerrado_raster_1985, cerrado_50km[530,])
+poligono <- cerrado_50km[530,]
+matriz <- Polygon(poligono@polygons[[1]]@Polygons[[1]]@coords)
+p <- SpatialPolygons(list(Polygons(list(matriz), "p")))
+plot(nraster) + lines(p)
+test <- mask(nraster, p)
+mapview(test)
+plot(test)
+```
+
+ + Estudar a estrutura das funções crop/mask
+ 
+ + Estudar modelo probabilistico binomial
+
+
+
+
+
+
+
